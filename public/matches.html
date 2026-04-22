@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matches</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="nav">
+    <a href="index.html">🏠 Tournaments</a>
+    <a href="teams.html">👥 Teams</a>
+    <a href="matches.html">⚔️ Matches</a>
+    <a href="stats.html">📊 Stats</a>
+    <a href="tasks.html">📋 Tasks</a> </div>
+
+    <div class="container">
+        <h2>⚔️ Match Manager</h2>
+        
+        <label>Select Tournament:</label>
+        <select id="tournamentSelect" onchange="loadMatches()"></select>
+
+        <hr style="border-color:#333; margin:20px 0;">
+        <h3>Create Match</h3>
+        <label>Team A:</label> <select id="teamASelect"></select>
+        <label>Team B:</label> <select id="teamBSelect"></select>
+        <label>Round:</label>
+        <select id="matchRound">
+        <option value="Group Stage">Group Stage</option>
+        <option value="Quarter Final">Quarter Final</option>
+        <option value="Semi Final">Semi Final</option>
+        <option value="Grand Final">🏆 Grand Final</option>
+        </select>
+
+
+        <button onclick="createMatch()">Create Match</button>
+
+        <hr style="border-color:#333; margin:20px 0;">
+        <h3>Matches</h3>
+        <div id="matchList" style="color:#aaa; text-align:center;">Select a tournament...</div>
+    </div>
+
+    <script>
+        async function init() {
+            // Load Tournaments
+            const tRes = await fetch('/api/tournaments');
+            const tournaments = await tRes.json();
+            const tSelect = document.getElementById('tournamentSelect');
+            tournaments.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t._id; opt.innerText = t.name;
+                tSelect.appendChild(opt);
+            });
+
+            // Load Teams (VALUE = ID, TEXT = NAME)
+            const teamRes = await fetch('/api/teams');
+            const teams = await teamRes.json();
+            const teamA = document.getElementById('teamASelect');
+            const teamB = document.getElementById('teamBSelect');
+            teams.forEach(t => {
+                const optA = document.createElement('option');
+                optA.value = t._id; optA.innerText = t.teamName; // We send ID
+                teamA.appendChild(optA);
+                
+                const optB = document.createElement('option');
+                optB.value = t._id; optB.innerText = t.teamName; // We send ID
+                teamB.appendChild(optB);
+            });
+            loadMatches();
+        }
+
+        async function createMatch() {
+            const tournamentId = document.getElementById('tournamentSelect').value;
+            const teamA = document.getElementById('teamASelect').value; // Contains ID
+            const teamB = document.getElementById('teamBSelect').value; // Contains ID
+            const round = document.getElementById('matchRound').value; // GET ROUND
+            
+            if(teamA === teamB) return alert("Teams must be different!");
+            
+            await fetch('/api/matches', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ tournamentId, teamA, teamB , round })
+            });
+            loadMatches();
+        }
+
+        async function loadMatches() {
+            const tournamentId = document.getElementById('tournamentSelect').value;
+            if(!tournamentId) return;
+            const res = await fetch(`/api/matches/${tournamentId}`);
+            const matches = await res.json();
+            const list = document.getElementById('matchList');
+            list.innerHTML = '';
+
+            matches.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'match-card'; // Uses style.css
+
+                // NORMALIZATION LOGIC: Access the populated object (e.g. m.teamA.teamName)
+                const nameA = m.teamA?.teamName || "Deleted Team";
+                const nameB = m.teamB?.teamName || "Deleted Team";
+                const winnerName = m.winner?.teamName || "Pending";
+                
+                // Get the round (or default to Group Stage if old data)
+                    const roundName = m.round || "Group Stage";
+
+                if (m.status === 'Completed') {
+                    div.innerHTML = `
+            <div style="flex:1">
+                <span style="font-size:0.8rem; color:#888; text-transform:uppercase;">${roundName}</span><br>
+                <span style="font-weight:bold">${nameA} vs ${nameB}</span>
+            </div>
+            <div style="text-align:right">
+                <span style="color:green; font-weight:bold">Winner: ${winnerName}</span><br>
+                <small>Score: ${m.scoreA} - ${m.scoreB}</small>
+            </div>
+        `;
+    } else {
+                    // We pass IDs to the update function
+                    div.innerHTML = `
+            <div style="flex:1">
+                <span style="font-size:0.8rem; color:#888; text-transform:uppercase;">${roundName}</span><br>
+                <span style="font-weight:bold">${nameA} vs ${nameB}</span>
+            </div>
+            <div>
+                <input type="number" id="sA-${m._id}" class="score-input"> - 
+                <input type="number" id="sB-${m._id}" class="score-input">
+                <button style="width:auto; margin-left:10px; padding:5px 10px;" 
+                    onclick="updateScore('${m._id}', '${m.teamA?._id}', '${m.teamB?._id}')">End</button>
+            </div>
+        `;
+                }
+                list.appendChild(div);
+            });
+        }
+
+        async function updateScore(id, tA_ID, tB_ID) {
+            const sA = document.getElementById(`sA-${id}`).value;
+            const sB = document.getElementById(`sB-${id}`).value;
+            await fetch(`/api/matches/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ scoreA: sA, scoreB: sB, teamA: tA_ID, teamB: tB_ID })
+            });
+            loadMatches();
+        }
+        init();
+    </script>
+</body>
+</html>

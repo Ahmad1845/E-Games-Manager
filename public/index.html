@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Games Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="nav">
+    <a href="index.html">🏠 Tournaments</a>
+    <a href="teams.html">👥 Teams</a>
+    <a href="matches.html">⚔️ Matches</a>
+    <a href="stats.html">📊 Stats</a>
+    <a href="tasks.html">📋 Tasks</a> </div>
+</div>
+
+    <div class="container">
+        <h2>🏆 Create New Tournament</h2>
+        
+        <form id="createTournamentForm">
+            <label>Tournament Name:</label>
+            <input type="text" id="tName" placeholder="e.g. Winter Valorant Cup" required>
+
+           <label>Game:</label>
+<input type="text" id="tGame" placeholder="e.g. Tekken 8, FIFA 24, Dota 2" required>
+
+            <label>Prize Pool ($):</label>
+            <input type="number" id="tPrize" placeholder="500" required>
+
+            <button type="submit">Create Tournament</button>
+        </form>
+
+        <div id="tournamentList">
+            <hr style="margin: 20px 0;">
+        
+        <h3>📋 Upcoming Tournaments</h3>
+        <div id="tournamentList">
+            <p>Loading...</p>
+        </div>
+    </div>
+        
+    </div>
+
+    <script src="script.js"></script> </body>
+</html>

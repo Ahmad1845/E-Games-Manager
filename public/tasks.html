@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Games Admin Panel - Tasks</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="nav">
+        <a href="index.html">🏠 Tournaments</a>
+        <a href="teams.html">👥 Teams</a>
+        <a href="matches.html">⚔️ Matches</a>
+        <a href="stats.html">📊 Stats</a>
+        <a href="tasks.html">📋 Tasks</a>
+    </div>
+
+    <div class="container">
+        <h2>📋 Manage Tasks</h2>
+        
+        <form id="createTaskForm">
+            <label>Task Title:</label>
+            <input type="text" id="taskTitle" placeholder="e.g. Pay Prize Pool" required>
+
+            <label>Description (Optional):</label>
+            <input type="text" id="taskDesc" placeholder="e.g. Send $500 to Team X">
+
+            <button type="submit">Create Task</button>
+        </form>
+
+        <div id="taskListContainer">
+            <hr style="margin: 20px 0;">
+            <h3>📝 To-Do List</h3>
+            <div id="taskList">
+                <p>Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

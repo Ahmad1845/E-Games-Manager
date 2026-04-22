@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournament Stats</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="nav">
+        <a href="index.html">🏠 Tournaments</a>
+        <a href="teams.html">👥 Teams</a>
+        <a href="matches.html">⚔️ Matches</a>
+        <a href="stats.html" style="color: #00ff88;">📊 Stats</a>
+        <a href="tasks.html">📋 Tasks</a>
+    </div>
+
+    <div class="container">
+        <h2>📊 Tournament Statistics</h2>
+        
+        <label>Select Tournament to View:</label>
+        <select id="statSelect" onchange="console.log('Changed!'); loadStats()">
+            <option value="">-- Loading List... --</option>
+        </select>
+
+        <hr style="border-color:#333; margin:20px 0;">
+
+        <div class="stats-grid" id="statsDisplay" style="display:none;">
+            <div class="stat-card">
+                <span class="stat-number" id="s-prize" style="color:#ffd700">-</span>
+                <span class="stat-label">Prize Pool</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="s-matches">-</span>
+                <span class="stat-label">Matches Played</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="s-status" style="font-size:1.5rem">-</span>
+                <span class="stat-label">Game</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-number" id="s-leader" style="color:#00ff88; font-size:1.5rem">TBD</span>
+                <span class="stat-label">Leading Team</span>
+            </div>
+        </div>
+
+        <div id="tableContainer" style="display:none; margin-top:20px;">
+            <h3>🏆 Top Teams</h3>
+            <table id="leaderboardTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Team Name</th>
+                        <th>Wins</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        
+        <div id="loadingMsg" style="text-align:center; color:#888; margin-top:20px;">
+            Select a tournament above to see details.
+        </div>
+
+    </div>
+
+    <script>
+        // 1. Load Dropdown on Startup
+        async function init() {
+            try {
+                const res = await fetch('/api/tournaments');
+                const tournaments = await res.json();
+                
+                const select = document.getElementById('statSelect');
+                select.innerHTML = ''; // Clear "Loading..." text
+
+                // Add Default Option
+                const defaultOpt = document.createElement('option');
+                defaultOpt.innerText = "-- Select Tournament --";
+                defaultOpt.value = "";
+                select.appendChild(defaultOpt);
+
+                tournaments.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t._id;
+                    opt.innerText = t.name;
+                    select.appendChild(opt);
+                });
+                console.log("✅ Tournaments Loaded into Dropdown");
+            } catch (err) {
+                alert("Error loading list: " + err.message);
+            }
+        }
+
+        // 2. Load Stats when Dropdown Changes
+        async function loadStats() {
+            const id = document.getElementById('statSelect').value;
+            
+            // If user selects the "Select Tournament" default option, do nothing
+            if(!id) return; 
+
+            console.log("🚀 Fetching stats for ID:", id); // Look for this in Browser Console
+
+            try {
+                const res = await fetch('/api/stats/' + id);
+                
+                if (!res.ok) {
+                    throw new Error(`Server Error: ${res.status}`);
+                }
+
+                const data = await res.json();
+                console.log("📦 Data Received:", data);
+
+                // SHOW THE UI
+                document.getElementById('statsDisplay').style.display = 'grid';
+                document.getElementById('tableContainer').style.display = 'block';
+                document.getElementById('loadingMsg').style.display = 'none';
+
+                // FILL DATA
+                document.getElementById('s-prize').innerText = "$" + data.tournament.prizePool;
+                document.getElementById('s-matches').innerText = data.stats.completedMatches + " / " + data.stats.totalMatches;
+                document.getElementById('s-status').innerText = data.tournament.game; 
+                
+                // FILL LEADER
+                if(data.leaderboard.length > 0) {
+                    document.getElementById('s-leader').innerText = data.leaderboard[0].teamName;
+                } else {
+                    document.getElementById('s-leader').innerText = "None";
+                }
+
+                // FILL TABLE
+                const tbody = document.querySelector('#leaderboardTable tbody');
+                tbody.innerHTML = '';
+                
+                if(data.leaderboard.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">No matches completed yet.</td></tr>';
+                } else {
+                    data.leaderboard.forEach((team, index) => {
+                        const tr = document.createElement('tr');
+                        const rank = index === 0 ? '👑 1st' : (index + 1) + 'th';
+                        tr.innerHTML = `
+                            <td>${rank}</td>
+                            <td style="font-weight:bold">${team.teamName}</td>
+                            <td>${team.wins}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert("Failed to load stats! Check console.");
+            }
+        }
+
+        // Run Init
+        init();
+    </script>
+</body>
+</html>

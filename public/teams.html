@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teams</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="nav">
+    <a href="index.html">🏠 Tournaments</a>
+    <a href="teams.html">👥 Teams</a>
+    <a href="matches.html">⚔️ Matches</a>
+    <a href="stats.html">📊 Stats</a>
+    <a href="tasks.html">📋 Tasks</a> </div>
+
+    <div class="container">
+        <h2>👥 Register Team</h2>
+        <form id="createTeamForm">
+            <label>Team Name:</label>
+            <input type="text" id="teamName" placeholder="e.g. ThunderSquad" required>
+            
+<label>Game:</label>
+<input type="text" id="teamGame" placeholder="e.g. Tekken8, Pubg " required>
+
+
+            <label>Members (comma separated):</label>
+            <input type="text" id="teamMembers" placeholder="Ali, Haseeb, John" required>
+            
+            <button type="submit">Register Team</button>
+        </form>
+
+        <hr style="border-color:#333; margin:20px 0;">
+        <h3>Registered Teams</h3>
+        <div id="teamList">Loading...</div>
+    </div>
+
+    <script>
+        async function loadTeams() {
+            const listDiv = document.getElementById('teamList');
+            const res = await fetch('/api/teams');
+            const teams = await res.json();
+            listDiv.innerHTML = '';
+            
+            teams.forEach(t => {
+                // NORMALIZATION LOGIC: 
+                // t.members is an array of objects: [{name: "Ali", ...}, {name: "Haseeb", ...}]
+                // We map them to just get the names string.
+                const memberString = t.members && t.members.length > 0 
+                    ? t.members.map(p => p.name).join(', ') 
+                    : "No members";
+
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>${t.teamName}</strong> <small style="color:#aaa">(${t.game})</small> <br> 
+                        <small style="color:#888">Players: ${memberString}</small>
+                    </div>
+                    <button class="btn-delete" onclick="deleteTeam('${t._id}')">Delete</button>
+                `;
+                listDiv.appendChild(div);
+            });
+        }
+
+        async function deleteTeam(id) {
+            if(confirm("Are you sure? This will delete the team and its players.")) {
+                await fetch('/api/teams/' + id, { method: 'DELETE' });
+                loadTeams();
+            }
+        }
+
+        document.getElementById('createTeamForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                teamName: document.getElementById('teamName').value,
+                game: document.getElementById('teamGame').value,
+                members: document.getElementById('teamMembers').value
+            };
+            await fetch('/api/teams', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            document.getElementById('createTeamForm').reset();
+            loadTeams();
+        });
+        loadTeams();
+    </script>
+</body>
+</html>
